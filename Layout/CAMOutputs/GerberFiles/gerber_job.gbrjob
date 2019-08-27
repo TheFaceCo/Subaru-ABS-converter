@@ -1,0 +1,24 @@
+{
+    "Header": {
+        "Comment": "All values are metric (mm)",
+        "CreationDate": "2019-08-27T00:57:37Z",
+        "GenerationSoftware": {
+            "Application": "EAGLE",
+            "Vendor": "Autodesk",
+            "Version": "9.4.2"
+        },
+        "Part": "Single"
+    },
+    "Overall": {
+        "BoardThickness": 1.57,
+        "LayerNumber": 2,
+        "Name": {
+            "ProjectId": "ABS converter"
+        },
+        "Owner": "Andrew Browning <abrowning@faceco.net>",
+        "Size": {
+            "X": 91.11,
+            "Y": 50.79
+        }
+    }
+}
