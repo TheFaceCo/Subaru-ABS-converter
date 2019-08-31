@@ -24,8 +24,8 @@ int complement2 = 3;
 #define VSSPIN    20
 
 
-const unsigned long inputwheelteeth = 3;
-const unsigned long outputwheelteeth = 1;
+const unsigned long inputwheelteeth = 96;
+const unsigned long outputwheelteeth = 44;
 
 
 bool signalstarted = false;
