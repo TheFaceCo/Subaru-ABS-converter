@@ -159,8 +159,8 @@
 <text x="4.191" y="27.051" size="1.27" layer="21">WSSIN1</text>
 <text x="4.191" y="21.336" size="1.27" layer="21">WSSIN2</text>
 <text x="38.989" y="14.351" size="2.54" layer="21">10k</text>
-<text x="54.61" y="29.21" size="1.778" layer="21">22k</text>
-<text x="62.23" y="48.26" size="1.778" layer="21">22k</text>
+<text x="54.61" y="29.21" size="1.778" layer="21">20k</text>
+<text x="62.23" y="48.26" size="1.778" layer="21">20k</text>
 <text x="55.372" y="41.275" size="1.778" layer="21">10k</text>
 <text x="62.103" y="22.352" size="1.778" layer="21">10k</text>
 <text x="69.977" y="45.085" size="1.778" layer="21">10k</text>
@@ -178,7 +178,6 @@
 <wire x1="6.35" y1="22.86" x2="3.81" y2="22.86" width="0.254" layer="21"/>
 <hole x="87.63" y="46.99" drill="3.81"/>
 <hole x="3.81" y="3.81" drill="3.81"/>
-<text x="9.017" y="9.144" size="1.778" layer="21" rot="R315">63.4k 1%</text>
 </plain>
 <libraries>
 <library name="SparkFun-Capacitors">
