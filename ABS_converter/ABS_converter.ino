@@ -1,4 +1,4 @@
-unsigned long halfwave = 200;
+const unsigned long halfwave = 200;
 
 unsigned long period1 = 10000000;
 unsigned long periodflag1;
@@ -119,69 +119,71 @@ void loop() {
 
   //  Write to the serial buffer when the ISR has been accessed, then set up new waveform timings
   if (input1found) {
-    //    if (serial1toggle) {
-    //      Serial.println("1ping");
-    //      serial1toggle = !serial1toggle;
-    //    }
-    //    else {
-    //      Serial.println("1gnip");
-    //      serial1toggle = !serial1toggle;
-    //    }
-    period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
-    periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
+    if (!signal1started) {
+      //    if (serial1toggle) {
+      //      Serial.println("1ping");
+      //      serial1toggle = !serial1toggle;
+      //    }
+      //    else {
+      //      Serial.println("1gnip");
+      //      serial1toggle = !serial1toggle;
+      //    }
+      period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
+      periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
 
-    period1buffer = period1buffer * inputwheelteeth; //scale period up by input wheel count
+      period1buffer = period1buffer * inputwheelteeth; //scale period up by input wheel count
 
-    VSSfactor1 = period1buffer; //store scaled period for VSS
+      VSSfactor1 = period1buffer; //store scaled period for VSS
 
-    period1buffer = period1buffer / outputwheelteeth; //scale period down by output wheel count
+      period1buffer = period1buffer / outputwheelteeth; //scale period down by output wheel count
 
-    //    period1buffer = period1buffer * complement1; //store period with filter
-    //    period1 = period1 * complement2;
-    //    period1 = period1 + period1buffer;
-    //    period1 = period1 / 100;
+      //    period1buffer = period1buffer * complement1; //store period with filter
+      //    period1 = period1 * complement2;
+      //    period1 = period1 + period1buffer;
+      //    period1 = period1 / 100;
 
-    period1 = period1buffer; //store scaled period directly without filtering
+      period1 = period1buffer; //store scaled period directly without filtering
 
-    signal1send = period1 - halfwave;
-    signal1end = period1;
-    signal1start = signal1send - halfwave;
-    input1found = false;
-    updateVSS();
+      signal1start = period1 - (2 * halfwave); //backdate period to beginning of waveform
+
+      input1found = false;
+      updateVSS();
+    }
   }
 
   if (input2found) {
-    //    if (serial2toggle) {
-    //      Serial.println("2ping");
-    //      serial2toggle = !serial2toggle;
-    //    }
-    //    else {
-    //      Serial.println("2gnip");
-    //      serial2toggle = !serial2toggle;
-    //    }
-    period2buffer = microsISRbuffer2 - periodflag2;
-    periodflag2 = microsISRbuffer2;
+    if (!signal2started) {
+      //    if (serial2toggle) {
+      //      Serial.println("2ping");
+      //      serial2toggle = !serial2toggle;
+      //    }
+      //    else {
+      //      Serial.println("2gnip");
+      //      serial2toggle = !serial2toggle;
+      //    }
+      period2buffer = microsISRbuffer2 - periodflag2;
+      periodflag2 = microsISRbuffer2;
 
-    period2buffer = period2buffer * inputwheelteeth;
+      period2buffer = period2buffer * inputwheelteeth;
 
-    VSSfactor2 = period2buffer;
+      VSSfactor2 = period2buffer;
 
-    period2buffer = period2buffer / outputwheelteeth;
+      period2buffer = period2buffer / outputwheelteeth;
 
-    //    period2buffer = period2buffer * complement1;
-    //    period2 = period2 * complement2;
-    //    period2 = period2 + period2buffer;
-    //    period2 = period2 / 100;
+      //    period2buffer = period2buffer * complement1;
+      //    period2 = period2 * complement2;
+      //    period2 = period2 + period2buffer;
+      //    period2 = period2 / 100;
 
-    period2 = period2buffer; //removed filter
+      period2 = period2buffer; //removed filter
 
-    //end of signal occurs when the output stage is returned to neutral (1 output HIGH, one output LOW). The prior event it the zero crossing (outputs both LOW). The next prior event is the start of the wave (both outputs HIGH)
-    //
-    signal2send = period2 - halfwave; //'send' the zero crossing event at period - halfwave
-    signal2end = period2; //return the system to neutral at period
-    signal2start = signal2send - halfwave; // prime the output stage for the zero crossing at period - 2x halfwave
-    input2found = false;
-    updateVSS();
+      //end of signal occurs when the output stage is returned to neutral (1 output HIGH, one output LOW). The prior event it the zero crossing (outputs both LOW). The next prior event is the start of the wave (both outputs HIGH)
+
+      signal2start = period2 - (2 * halfwave); //backdate period to beginning of waveform
+
+      input2found = false;
+      updateVSS();
+    }
   }
 
   //generate waveform for output 1
@@ -190,6 +192,8 @@ void loop() {
       digitalWriteFast(WSS1PIN1, LOW);
       digitalWriteFast(WSS1PIN2, LOW);
       signal1started = true;
+      signal1send = signal1start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
+      signal1end = signal1send + halfwave; //re-find waveform end (should correspond to the period on average)
     }
     if (!signal1sent) {
       if (periodtimer1 - delayflag1 >= signal1send) {
@@ -217,6 +221,8 @@ void loop() {
       digitalWriteFast(WSS2PIN1, LOW);
       digitalWriteFast(WSS2PIN2, LOW);
       signal2started = true;
+      signal2send = signal2start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
+      signal2end = signal2send + halfwave; //re-find waveform end (should correspond to the period on average)
     }
     if (!signal2sent) {
       if (periodtimer2 - delayflag2 >= signal2send) {
