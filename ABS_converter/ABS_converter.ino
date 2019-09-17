@@ -28,8 +28,8 @@ unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightoff = 0;
 
-int complement1 = 97; // must add to exactly 100. int to avoid float math
-int complement2 = 3;
+int complement1 = 50; // must add to exactly 100. int to avoid float math
+int complement2 = 50;
 
 #define WSS1PIN1  3
 #define WSS1PIN2  4
