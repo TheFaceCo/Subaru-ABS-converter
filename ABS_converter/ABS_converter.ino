@@ -28,8 +28,8 @@ unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightoff = 0;
 
-int complement1 = 1; // must add to exactly 100. int to avoid float math
-int complement2 = 99;
+int complement1 = 97; // must add to exactly 100. int to avoid float math
+int complement2 = 3;
 
 #define WSS1PIN1  3
 #define WSS1PIN2  4
@@ -47,7 +47,7 @@ int complement2 = 99;
 
 const unsigned long inputwheelteeth = 96;
 const unsigned long outputwheelteeth = 44;
-const unsigned long VSSwheelteeth = 5; //this number is made up. Set to correct wheel count from transmission
+const unsigned long VSSwheelteeth = 2; //this number is made up. Set to correct wheel count from transmission
 
 
 bool signal1started = false;
@@ -91,8 +91,8 @@ void setup() {
   digitalWriteFast(OE9921, HIGH); //enable max9921
   delay(10);
 
-  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, FALLING);
-  attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, FALLING );
+  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, RISING);
 
   delayflag1 = micros(); //sets up initial conditions for WSS output waveform
   periodflag1 = delayflag1; //avoid second call to micros(), trickrepeated throughout
@@ -127,19 +127,22 @@ void loop() {
     //      Serial.println("1gnip");
     //      serial1toggle = !serial1toggle;
     //    }
-    period1buffer = microsISRbuffer1 - periodflag1;
-    VSSfactor1 = period1buffer;
-    period1buffer = period1buffer * inputwheelteeth;
-    period1buffer = period1buffer / outputwheelteeth;
+    period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
+    periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
 
-    //    period1buffer = period1buffer * complement1;
+    period1buffer = period1buffer * inputwheelteeth; //scale period up by input wheel count
+
+    VSSfactor1 = period1buffer; //store scaled period for VSS
+
+    period1buffer = period1buffer / outputwheelteeth; //scale period down by output wheel count
+
+    //    period1buffer = period1buffer * complement1; //store period with filter
     //    period1 = period1 * complement2;
     //    period1 = period1 + period1buffer;
     //    period1 = period1 / 100;
 
-    period1 = period1buffer; //removed filter
+    period1 = period1buffer; //store scaled period directly without filtering
 
-    periodflag1 = microsISRbuffer1;
     signal1send = period1 - halfwave;
     signal1end = period1;
     signal1start = signal1send - halfwave;
@@ -157,8 +160,12 @@ void loop() {
     //      serial2toggle = !serial2toggle;
     //    }
     period2buffer = microsISRbuffer2 - periodflag2;
-    VSSfactor2 = period2buffer;
+    periodflag2 = microsISRbuffer2;
+
     period2buffer = period2buffer * inputwheelteeth;
+
+    VSSfactor2 = period2buffer;
+
     period2buffer = period2buffer / outputwheelteeth;
 
     //    period2buffer = period2buffer * complement1;
@@ -168,10 +175,11 @@ void loop() {
 
     period2 = period2buffer; //removed filter
 
-    periodflag2 = microsISRbuffer2;
-    signal2send = period2 - halfwave;
-    signal2end = period2;
-    signal2start = signal2send - halfwave;
+    //end of signal occurs when the output stage is returned to neutral (1 output HIGH, one output LOW). The prior event it the zero crossing (outputs both LOW). The next prior event is the start of the wave (both outputs HIGH)
+    //
+    signal2send = period2 - halfwave; //'send' the zero crossing event at period - halfwave
+    signal2end = period2; //return the system to neutral at period
+    signal2start = signal2send - halfwave; // prime the output stage for the zero crossing at period - 2x halfwave
     input2found = false;
     updateVSS();
   }
@@ -259,8 +267,8 @@ void input2ISR() {
 
 void updateVSS() {
   VSSperiodbuffer = VSSfactor1 + VSSfactor2;
-  VSSperiodbuffer = VSSperiodbuffer / 2;  //take the average of the two wheel speed sensors
-  VSSperiodbuffer = VSSperiodbuffer * inputwheelteeth;
+  VSSperiodbuffer = VSSperiodbuffer / 2; //take the average of the two wheel speed sensors
+  //  VSSperiodbuffer = VSSperiodbuffer * inputwheelteeth;  //removed becuase this math is being done up top, to reduce duplicate effort
   VSSperiodbuffer = VSSperiodbuffer / VSSwheelteeth;
 
   //  VSSperiodbuffer = VSSperiodbuffer * complement1;
@@ -268,6 +276,6 @@ void updateVSS() {
   //  VSSperiod = VSSperiod + VSSperiodbuffer;
   //  VSSperiod = VSSperiod / 200; //divide by 200 instead of 100 because we'll be toggling VSS on or off every half period
 
-  VSSperiod = VSSperiodbuffer/2;
+  VSSperiod = VSSperiodbuffer / 2;
 
 }
