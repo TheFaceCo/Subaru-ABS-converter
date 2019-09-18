@@ -43,12 +43,12 @@ int complement2 = 50;
 #define OUT29921  19
 #define ONBOARDLED 13
 
-#define minimumspeed 10000
+#define minimumspeed 1000
 
 
 
-const unsigned long inputwheelteeth = 96;
-const unsigned long outputwheelteeth = 44;
+const unsigned long inputwheelteeth = 44;
+const unsigned long outputwheelteeth = 96;
 const unsigned long VSSwheelteeth = 2; //this number is made up. Set to correct wheel count from transmission
 
 
@@ -198,85 +198,85 @@ void loop() {
     }
 
     //generate waveform for output 1
-    if (period1 > minimumspeed) {
-      if (periodtimer1 - delayflag1 >= signal1start) {
-        if (!signal1started) {
+    //    if (period1 > minimumspeed) {
+    if (periodtimer1 - delayflag1 >= signal1start) {
+      if (!signal1started) {
+        digitalWriteFast(WSS1PIN1, LOW);
+        digitalWriteFast(WSS1PIN2, LOW);
+        signal1started = true;
+        signal1send = signal1start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
+        signal1end = signal1send + halfwave; //re-find waveform end (should correspond to the period on average)
+      }
+      if (!signal1sent) {
+        if (periodtimer1 - delayflag1 >= signal1send) {
           digitalWriteFast(WSS1PIN1, HIGH);
           digitalWriteFast(WSS1PIN2, HIGH);
-          signal1started = true;
-          signal1send = signal1start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
-          signal1end = signal1send + halfwave; //re-find waveform end (should correspond to the period on average)
+          signal1sent = true;
+          signal1ended = false;
         }
-        if (!signal1sent) {
-          if (periodtimer1 - delayflag1 >= signal1send) {
-            digitalWriteFast(WSS1PIN1, LOW);
-            digitalWriteFast(WSS1PIN2, LOW);
-            signal1sent = true;
-            signal1ended = false;
-          }
-        }
-        if (!signal1ended) {
-          if (periodtimer1 - delayflag1 >= signal1end) {
-            digitalWriteFast(WSS1PIN1, HIGH);
-            digitalWriteFast(WSS1PIN2, LOW);
-            delayflag1 = periodtimer1;
-            signal1ended = true;
-            signal1started = false;
-            signal1sent = false;
-          }
+      }
+      if (!signal1ended) {
+        if (periodtimer1 - delayflag1 >= signal1end) {
+          digitalWriteFast(WSS1PIN1, HIGH);
+          digitalWriteFast(WSS1PIN2, LOW);
+          delayflag1 = periodtimer1;
+          signal1ended = true;
+          signal1started = false;
+          signal1sent = false;
         }
       }
     }
-    else {
-      digitalWriteFast(WSS1PIN1, HIGH);
-      digitalWriteFast(WSS1PIN2, LOW);
-      delayflag1 = periodtimer1;
-      signal1ended = true;
-      signal1started = false;
-      signal1sent = false;
-    }
+    //    }
+    //    else {
+    //      digitalWriteFast(WSS1PIN1, HIGH);
+    //      digitalWriteFast(WSS1PIN2, LOW);
+    //      delayflag1 = periodtimer1;
+    //      signal1ended = true;
+    //      signal1started = false;
+    //      signal1sent = false;
+    //    }
 
     //generate waveform for output 2
-    if (period2 > minimumspeed) {
-      if (periodtimer2 - delayflag2 >= signal2start) {
-        if (!signal2started) {
+    //    if (period2 > minimumspeed) {
+    if (periodtimer2 - delayflag2 >= signal2start) {
+      if (!signal2started) {
+        digitalWriteFast(WSS2PIN1, LOW);
+        digitalWriteFast(WSS2PIN2, LOW);
+        signal2started = true;
+        signal2send = signal2start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
+        signal2end = signal2send + halfwave; //re-find waveform end (should correspond to the period on average)
+      }
+      if (!signal2sent) {
+        if (periodtimer2 - delayflag2 >= signal2send) {
           digitalWriteFast(WSS2PIN1, HIGH);
           digitalWriteFast(WSS2PIN2, HIGH);
-          signal2started = true;
-          signal2send = signal2start + halfwave; //re-find zero crossing center in order to tolerate rapidly changing periods. If this is preloaded, signal distortion will result when the period is updated at a bad time.
-          signal2end = signal2send + halfwave; //re-find waveform end (should correspond to the period on average)
+          signal2sent = true;
+          signal2ended = false;
         }
-        if (!signal2sent) {
-          if (periodtimer2 - delayflag2 >= signal2send) {
-            digitalWriteFast(WSS2PIN1, LOW);
-            digitalWriteFast(WSS2PIN2, LOW);
-            signal2sent = true;
-            signal2ended = false;
-          }
-        }
-        if (!signal2ended) {
-          if (periodtimer2 - delayflag2 >= signal2end) {
-            digitalWriteFast(WSS2PIN1, HIGH);
-            digitalWriteFast(WSS2PIN2, LOW);
-            delayflag2 = periodtimer2;
-            signal2ended = true;
-            signal2started = false;
-            signal2sent = false;
-          }
+      }
+      if (!signal2ended) {
+        if (periodtimer2 - delayflag2 >= signal2end) {
+          digitalWriteFast(WSS2PIN1, HIGH);
+          digitalWriteFast(WSS2PIN2, LOW);
+          delayflag2 = periodtimer2;
+          signal2ended = true;
+          signal2started = false;
+          signal2sent = false;
         }
       }
     }
-    else {
-      digitalWriteFast(WSS2PIN1, HIGH);
-      digitalWriteFast(WSS2PIN2, LOW);
-      delayflag2 = periodtimer2;
-      signal2ended = true;
-      signal2started = false;
-      signal2sent = false;
-    }
+    //    }
+    //    else {
+    //      digitalWriteFast(WSS2PIN1, HIGH);
+    //      digitalWriteFast(WSS2PIN2, LOW);
+    //      delayflag2 = periodtimer2;
+    //      signal2ended = true;
+    //      signal2started = false;
+    //      signal2sent = false;
+    //    }
 
     //generate waveform for VSS
-    if (VSSlightoff < 10000) {
+    if (VSSlightoff < 1000) {
       if (VSSperiodtimer - VSSdelayflag >= VSSperiod) {
         if (VSStoggle) {
           digitalWriteFast(VSSPIN, HIGH);
@@ -311,11 +311,11 @@ void updateVSS() {
   //  VSSperiodbuffer = VSSperiodbuffer * inputwheelteeth;  //removed becuase this math is being done up top, to reduce duplicate effort
   VSSperiodbuffer = VSSperiodbuffer / VSSwheelteeth;
 
-  VSSperiodbuffer = VSSperiodbuffer * complement1;
-  VSSperiod = VSSperiod * complement2;
-  VSSperiod = VSSperiod + VSSperiodbuffer;
-  VSSperiod = VSSperiod / 200; //divide by 200 instead of 100 because we'll be toggling VSS on or off every half period
+  //  VSSperiodbuffer = VSSperiodbuffer * complement1;
+  //  VSSperiod = VSSperiod * complement2;
+  //  VSSperiod = VSSperiod + VSSperiodbuffer;
+  //  VSSperiod = VSSperiod / 200; //divide by 200 instead of 100 because we'll be toggling VSS on or off every half period
 
-  //VSSperiod = VSSperiodbuffer / 2;
+  VSSperiod = VSSperiodbuffer / 2;
 
 }
