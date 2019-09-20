@@ -50,8 +50,8 @@ unsigned long VSSlightcount = 0;
 int complement1 = 90; // must add to exactly 100. int to avoid float math
 int complement2 = 10;
 
-const unsigned long inputwheelteeth = 96;
-const unsigned long outputwheelteeth = 88;
+const unsigned long inputwheelteeth = 48; //96 lines but it's only reading every other line
+const unsigned long outputwheelteeth = 44;
 const unsigned long VSSwheelteeth = 2; //this number is made up. Set to correct wheel count from transmission
 
 
