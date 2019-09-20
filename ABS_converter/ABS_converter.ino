@@ -1,14 +1,39 @@
-#define debug1 0
-#define debug2 0
-#define debugout1 0
-#define debugout2 0
+#define debug1 0 //serial output of pulse count data from input 1
+#define debug2 0 //input 2
+#define debugout1 0 //output1
+#define debugout2 0 //output2
 int debugincount1 = 0;
 int debugoutcount1 = 0;
 int debugincount2 = 0;
 int debugoutcount2 = 0;
 
-unsigned long halfwave = 300;
-#define longhalfwave  300
+#define VSSoutput 0 //set to one for output to run as VSS. Set to 0 for use as GPIO. Default is temporarily showing an average of both WSS sensors with an LED.
+#define VSSlightoff 750 //how long to display VSS on output when VSS is disabled
+
+//Defined as const variables to ensure type, to prevent speed problems with type conversions
+const unsigned long inputwheelteeth = 96; //Encoder has 48 N and 48 S poles. The max9921 sees each as 1 or 0, and "no magnet" is an indeterminate state.
+const unsigned long outputwheelteeth = 44;
+const unsigned long VSSwheelteeth = 1; //this number is made up. Set to correct wheel count from transmission
+
+#define WSS1PIN1  3
+#define WSS1PIN2  4
+#define WSS2PIN1  5
+#define WSS2PIN2  6
+#define VSSPIN    7
+#define OE9921    15
+#define DIAG9921  16
+#define ERR9921   17
+#define OUT19921  18
+#define OUT29921  19
+#define ONBOARDLED 13
+
+unsigned long halfwave = 300; //used to determined the shape of the output pulse
+#define longhalfwave  300 //seems like ideally the waveform should be about 600uS long, but that needs to scale down at higher speeds.
+
+#define minimumspeed 1000 //originally used to set a floor to the WSS outputs. Doesn't seem to be required, left for posterity. 
+
+const unsigned long complement1 = 70; // Used as a running average of two input periods. Must add to exactly 100. int to avoid float math
+const unsigned long complement2 = 30;
 
 unsigned long period1 = 100;
 unsigned long periodflag1;
@@ -39,32 +64,8 @@ unsigned long VSSperiod = 10000000;
 unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightcount = 0;
-#define VSSlightoff 750
 
-#define WSS1PIN1  3
-#define WSS1PIN2  4
-#define WSS2PIN1  5
-#define WSS2PIN2  6
-#define VSSPIN    7
-#define OE9921    15
-#define DIAG9921  16
-#define ERR9921   17
-#define OUT19921  18
-#define OUT29921  19
-#define ONBOARDLED 13
-
-#define minimumspeed 1000
-
-
-int complement1 = 70; // must add to exactly 100. int to avoid float math
-int complement2 = 30;
-
-const unsigned long inputwheelteeth = 96; //Encoder has 48 N and 48 S poles. The max9921 sees each as 1 or 0, and "no magnet" is an indeterminate state.
-const unsigned long outputwheelteeth = 44;
-const unsigned long VSSwheelteeth = 1; //this number is made up. Set to correct wheel count from transmission
-
-
-bool signal1started = false;
+bool signal1started = false; //these are used to find the start, middle, and end of the output waveform. 
 bool signal1sent = false;
 bool signal1ended = false;
 
@@ -72,15 +73,12 @@ bool signal2started = false;
 bool signal2sent = false;
 bool signal2ended = false;
 
-bool input1found = false;
+bool input1found = false; //ISR flags
 bool input2found = false;
 
-bool VSStoggle = false;
+bool VSStoggle = false; //VSS output toggles high/low every half period
 
-//bool serial1toggle = false;
-//bool serial2toggle = false;
-
-bool enabled = false;
+bool enabled = false; //output is not enabled until the first input pulse is found.
 
 void setup() {
   // put your setup code here, to run once:
@@ -318,7 +316,9 @@ void loop() {
         if (VSStoggle) {
           digitalWriteFast(VSSPIN, HIGH);
           VSStoggle = !VSStoggle;
-          VSSlightcount++;
+          if (!VSSoutput) {
+            VSSlightcount++;
+          }
         }
         else {
           digitalWriteFast(VSSPIN, LOW);
@@ -345,14 +345,13 @@ void input2ISR() {
 void updateVSS() {
   VSSperiodbuffer = VSSfactor1 + VSSfactor2;
   VSSperiodbuffer = VSSperiodbuffer / 2; //take the average of the two wheel speed sensors
-  //  VSSperiodbuffer = VSSperiodbuffer * inputwheelteeth;  //removed becuase this math is being done up top, to reduce duplicate effort
   VSSperiodbuffer = VSSperiodbuffer / VSSwheelteeth;
 
-  //  VSSperiodbuffer = VSSperiodbuffer * complement1;
-  //  VSSperiod = VSSperiod * complement2;
-  //  VSSperiod = VSSperiod + VSSperiodbuffer;
-  //  VSSperiod = VSSperiod / 200; //divide by 200 instead of 100 because we'll be toggling VSS on or off every half period
+  VSSperiodbuffer = VSSperiodbuffer * complement1; // filter VSS
+  VSSperiod = VSSperiod * complement2;
+  VSSperiod = VSSperiod + VSSperiodbuffer;
+  VSSperiod = VSSperiod / 200; //divide by 200 instead of 100 because we'll be toggling VSS on or off every half period
 
-  VSSperiod = VSSperiodbuffer / 2;
+  // VSSperiod = VSSperiodbuffer / 2; without filter
 
 }
