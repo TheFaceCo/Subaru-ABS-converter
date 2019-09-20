@@ -52,7 +52,7 @@ int complement2 = 10;
 
 const unsigned long inputwheelteeth = 48; //96 lines but it's only reading every other line
 const unsigned long outputwheelteeth = 44;
-const unsigned long VSSwheelteeth = 2; //this number is made up. Set to correct wheel count from transmission
+const unsigned long VSSwheelteeth = 1; //this number is made up. Set to correct wheel count from transmission
 
 
 bool signal1started = false;
