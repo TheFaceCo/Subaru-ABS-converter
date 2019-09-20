@@ -1,3 +1,12 @@
+#define debug1 0
+#define debug2 0
+#define debugout1 0
+#define debugout2 0
+int debugincount1 = 0;
+int debugoutcount1 = 0;
+int debugincount2 = 0;
+int debugoutcount2 = 0;
+
 unsigned long halfwave = 300;
 #define longhalfwave  300
 
@@ -68,16 +77,17 @@ bool input2found = false;
 
 bool VSStoggle = false;
 
-bool serial1toggle = false;
-bool serial2toggle = false;
+//bool serial1toggle = false;
+//bool serial2toggle = false;
 
 bool enabled = false;
 
 void setup() {
   // put your setup code here, to run once:
-  //  Serial.begin(115200);
-  //  Serial.println("start");
-
+  if (debug1 || debug2 || debugout1 || debugout2) {
+    Serial.begin(115200);
+    Serial.println("start");
+  }
   //wheelspeed outputs use two output pins through a voltage divider for 0, 1.75, and 3v (00, 01, and 11)
   pinMode(WSS1PIN1, OUTPUT); //wheelspeed 1 output 1
   pinMode(WSS1PIN2, OUTPUT); //wheelspeed 1 output 2
@@ -93,7 +103,7 @@ void setup() {
 
   pinMode(ONBOARDLED, OUTPUT); //onboard LED to display power
   digitalWriteFast(ONBOARDLED, HIGH); //display power state
-  
+
   digitalWriteFast(DIAG9921, LOW); //enforce DIAG port state
 
   delay(10); //give the max some time to get ready.
@@ -123,7 +133,6 @@ void setup() {
   digitalWriteFast(WSS2PIN2, LOW);
   digitalWriteFast(VSSPIN, HIGH);
 
-
   updateVSS();
 
 }
@@ -135,14 +144,11 @@ void loop() {
 
   if (enabled) {
     if (input1found) {
-      //    if (serial1toggle) {
-      //      Serial.println("1ping");
-      //      serial1toggle = !serial1toggle;
-      //    }
-      //    else {
-      //      Serial.println("1gnip");
-      //      serial1toggle = !serial1toggle;
-      //    }
+      if (debug1) {
+        debugincount1++;
+        Serial.print("in1: ");
+        Serial.println(debugincount1);
+      }
       period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
       periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
 
@@ -163,7 +169,7 @@ void loop() {
 
       if (period1buffer < 2 * longhalfwave + 50) { //scale waveform dynamically from longest wavelength as speed increases
         halfwave = period1buffer - 50;
-        halfwave = halfwave/2;
+        halfwave = halfwave / 2;
       }
       else {
         halfwave = longhalfwave;
@@ -178,14 +184,11 @@ void loop() {
     }
 
     if (input2found) {
-      //    if (serial2toggle) {
-      //      Serial.println("2ping");
-      //      serial2toggle = !serial2toggle;
-      //    }
-      //    else {
-      //      Serial.println("2gnip");
-      //      serial2toggle = !serial2toggle;
-      //    }
+      if (debug2) {
+        debugincount2++;
+        Serial.print("in2: ");
+        Serial.println(debugincount2);
+      }
       period2buffer = microsISRbuffer2 - periodflag2;
       periodflag2 = microsISRbuffer2;
 
@@ -206,7 +209,7 @@ void loop() {
 
       if (period2buffer < 2 * longhalfwave + 50) {
         halfwave = period2buffer - 50;
-        halfwave = halfwave/2;
+        halfwave = halfwave / 2;
       }
       else {
         halfwave = longhalfwave;
@@ -247,6 +250,11 @@ void loop() {
           signal1ended = true;
           signal1started = false;
           signal1sent = false;
+          if (debugout1) {
+            debugoutcount1++;
+            Serial.print("out1: ");
+            Serial.println(debugoutcount1);
+          }
         }
       }
     }
@@ -286,6 +294,11 @@ void loop() {
           signal2ended = true;
           signal2started = false;
           signal2sent = false;
+          if (debugout2) {
+            debugoutcount2++;
+            Serial.print("out2: ");
+            Serial.println(debugoutcount2);
+          }
         }
       }
     }
