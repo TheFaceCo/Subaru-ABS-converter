@@ -29,7 +29,8 @@ unsigned long VSSperiodbuffer;
 unsigned long VSSperiod = 10000000;
 unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
-unsigned long VSSlightoff = 0;
+unsigned long VSSlightcount = 0;
+#define VSSlightoff 2000
 
 #define WSS1PIN1  3
 #define WSS1PIN2  4
@@ -297,12 +298,12 @@ void loop() {
     //    }
 
     //generate waveform for VSS
-    if (VSSlightoff < 5000) {
+    if (VSSlightcount < VSSlightoff) {
       if (VSSperiodtimer - VSSdelayflag >= VSSperiod) {
         if (VSStoggle) {
           digitalWriteFast(VSSPIN, HIGH);
           VSStoggle = !VSStoggle;
-          VSSlightoff++;
+          VSSlightcount++;
         }
         else {
           digitalWriteFast(VSSPIN, LOW);
