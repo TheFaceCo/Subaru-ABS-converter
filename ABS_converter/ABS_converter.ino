@@ -1,6 +1,5 @@
 unsigned long halfwave = 300;
 #define longhalfwave  300
-#define shorthalfwave 200
 
 unsigned long period1 = 100;
 unsigned long periodflag1;
@@ -159,15 +158,16 @@ void loop() {
       input1found = false;
       updateVSS();
 
-      if(period1buffer < 2 * longhalfwave + 50){
-        halfwave = shorthalfwave;
+      if (period1buffer < 2 * longhalfwave + 50) {
+        halfwave = period1buffer - 50;
+        halfwave = halfwave/2;
       }
-      else{
+      else {
         halfwave = longhalfwave;
       }
 
       //period1 = period1buffer; //store scaled period directly without filtering
-      
+
       if (!signal1started) {
         period1 = period1buffer;
         signal1start = period1 - (2 * halfwave); //backdate period to beginning of waveform
@@ -201,10 +201,11 @@ void loop() {
       input2found = false;
       updateVSS();
 
-      if(period2buffer < 2 * longhalfwave + 50){
-        halfwave = shorthalfwave;
+      if (period2buffer < 2 * longhalfwave + 50) {
+        halfwave = period2buffer - 50;
+        halfwave = halfwave/2;
       }
-      else{
+      else {
         halfwave = longhalfwave;
       }
 
