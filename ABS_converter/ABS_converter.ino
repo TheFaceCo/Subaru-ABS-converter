@@ -50,7 +50,7 @@ unsigned long VSSlightcount = 0;
 int complement1 = 90; // must add to exactly 100. int to avoid float math
 int complement2 = 10;
 
-const unsigned long inputwheelteeth = 48; //96 lines but it's only reading every other line
+const unsigned long inputwheelteeth = 48; //96 lines but it's only reading every other line or there is a divide by 2 error somewhere.
 const unsigned long outputwheelteeth = 44;
 const unsigned long VSSwheelteeth = 1; //this number is made up. Set to correct wheel count from transmission
 
@@ -87,7 +87,7 @@ void setup() {
   pinMode(VSSPIN, OUTPUT);//VSS output
   pinMode(OE9921, OUTPUT);//Output enable to MAX9921
   pinMode(DIAG9921, OUTPUT);//Diag to MAX9921
-  pinMode(17, INPUT); //ERR from MAX9921
+  pinMode(ERR9921, INPUT); //ERR from MAX9921
   pinMode(OUT19921, INPUT); //Hall 1 signal from MAX9921
   pinMode(OUT29921, INPUT); //Hall 2 signal from MAX9921
 
@@ -161,7 +161,7 @@ void loop() {
       input1found = false;
       updateVSS();
 
-      if (period1buffer < 2 * longhalfwave + 50) {
+      if (period1buffer < 2 * longhalfwave + 50) { //scale waveform dynamically from longest wavelength as speed increases
         halfwave = period1buffer - 50;
         halfwave = halfwave/2;
       }
