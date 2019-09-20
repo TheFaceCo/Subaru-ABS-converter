@@ -1,4 +1,4 @@
-const unsigned long halfwave = 200;
+const unsigned long halfwave = 300;
 
 unsigned long period1 = 100;
 unsigned long periodflag1;
@@ -28,9 +28,6 @@ unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightoff = 0;
 
-int complement1 = 50; // must add to exactly 100. int to avoid float math
-int complement2 = 50;
-
 #define WSS1PIN1  3
 #define WSS1PIN2  4
 #define WSS2PIN1  5
@@ -46,9 +43,11 @@ int complement2 = 50;
 #define minimumspeed 1000
 
 
+int complement1 = 90; // must add to exactly 100. int to avoid float math
+int complement2 = 10;
 
-const unsigned long inputwheelteeth = 44;
-const unsigned long outputwheelteeth = 96;
+const unsigned long inputwheelteeth = 96;
+const unsigned long outputwheelteeth = 88;
 const unsigned long VSSwheelteeth = 2; //this number is made up. Set to correct wheel count from transmission
 
 
@@ -276,7 +275,7 @@ void loop() {
     //    }
 
     //generate waveform for VSS
-    if (VSSlightoff < 1000) {
+    if (VSSlightoff < 5000) {
       if (VSSperiodtimer - VSSdelayflag >= VSSperiod) {
         if (VSStoggle) {
           digitalWriteFast(VSSPIN, HIGH);
