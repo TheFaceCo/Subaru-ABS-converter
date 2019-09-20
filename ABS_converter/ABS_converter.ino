@@ -1,4 +1,6 @@
-const unsigned long halfwave = 300;
+unsigned long halfwave = 300;
+#define longhalfwave  300
+#define shorthalfwave 200
 
 unsigned long period1 = 100;
 unsigned long periodflag1;
@@ -9,6 +11,7 @@ unsigned long signal1end;
 unsigned long periodtimer1;
 unsigned long microsISRbuffer1;
 unsigned long period1buffer;
+unsigned long oldperiod1buffer;
 
 unsigned long period2 = 100;
 unsigned long periodflag2;
@@ -19,6 +22,7 @@ unsigned long signal2end;
 unsigned long periodtimer2;
 unsigned long microsISRbuffer2;
 unsigned long period2buffer;
+unsigned long oldperiod2buffer;
 
 unsigned long VSSfactor1;
 unsigned long VSSfactor2;
@@ -129,70 +133,87 @@ void loop() {
 
   if (enabled) {
     if (input1found) {
+      //    if (serial1toggle) {
+      //      Serial.println("1ping");
+      //      serial1toggle = !serial1toggle;
+      //    }
+      //    else {
+      //      Serial.println("1gnip");
+      //      serial1toggle = !serial1toggle;
+      //    }
+      period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
+      periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
+
+      period1buffer = period1buffer * inputwheelteeth; //scale period up by input wheel count
+
+      VSSfactor1 = period1buffer; //store scaled period for VSS
+
+      period1buffer = period1buffer / outputwheelteeth; //scale period down by output wheel count
+
+      period1buffer = period1buffer * complement1; //store period with filter
+      oldperiod1buffer = period1;
+      oldperiod1buffer = oldperiod1buffer * complement2;
+      period1buffer = oldperiod1buffer + period1buffer;
+      period1buffer = period1buffer / 100;
+
+      input1found = false;
+      updateVSS();
+
+      if(period1buffer < 2 * longhalfwave + 50){
+        halfwave = shorthalfwave;
+      }
+      else{
+        halfwave = longhalfwave;
+      }
+
+      //period1 = period1buffer; //store scaled period directly without filtering
+      
       if (!signal1started) {
-        //    if (serial1toggle) {
-        //      Serial.println("1ping");
-        //      serial1toggle = !serial1toggle;
-        //    }
-        //    else {
-        //      Serial.println("1gnip");
-        //      serial1toggle = !serial1toggle;
-        //    }
-        period1buffer = microsISRbuffer1 - periodflag1; //calculate elapsed time since last ISR event
-        periodflag1 = microsISRbuffer1; //set flag to 'current' time from ISR
-
-        period1buffer = period1buffer * inputwheelteeth; //scale period up by input wheel count
-
-        VSSfactor1 = period1buffer; //store scaled period for VSS
-
-        period1buffer = period1buffer / outputwheelteeth; //scale period down by output wheel count
-
-        period1buffer = period1buffer * complement1; //store period with filter
-        period1 = period1 * complement2;
-        period1 = period1 + period1buffer;
-        period1 = period1 / 100;
-
-        //period1 = period1buffer; //store scaled period directly without filtering
-
+        period1 = period1buffer;
         signal1start = period1 - (2 * halfwave); //backdate period to beginning of waveform
-
-        input1found = false;
-        updateVSS();
       }
     }
 
     if (input2found) {
+      //    if (serial2toggle) {
+      //      Serial.println("2ping");
+      //      serial2toggle = !serial2toggle;
+      //    }
+      //    else {
+      //      Serial.println("2gnip");
+      //      serial2toggle = !serial2toggle;
+      //    }
+      period2buffer = microsISRbuffer2 - periodflag2;
+      periodflag2 = microsISRbuffer2;
+
+      period2buffer = period2buffer * inputwheelteeth;
+
+      VSSfactor2 = period2buffer;
+
+      period2buffer = period2buffer / outputwheelteeth;
+
+      period2buffer = period2buffer * complement1;
+      oldperiod2buffer = period2;
+      oldperiod2buffer = oldperiod2buffer * complement2;
+      period2buffer = oldperiod2buffer + period2buffer;
+      period2buffer = period2buffer / 100;
+
+      input2found = false;
+      updateVSS();
+
+      if(period2buffer < 2 * longhalfwave + 50){
+        halfwave = shorthalfwave;
+      }
+      else{
+        halfwave = longhalfwave;
+      }
+
+      //period2 = period2buffer; //removed filter
+
+      //end of signal occurs when the output stage is returned to neutral (1 output HIGH, one output LOW). The prior event it the zero crossing (outputs both LOW). The next prior event is the start of the wave (both outputs HIGH)
       if (!signal2started) {
-        //    if (serial2toggle) {
-        //      Serial.println("2ping");
-        //      serial2toggle = !serial2toggle;
-        //    }
-        //    else {
-        //      Serial.println("2gnip");
-        //      serial2toggle = !serial2toggle;
-        //    }
-        period2buffer = microsISRbuffer2 - periodflag2;
-        periodflag2 = microsISRbuffer2;
-
-        period2buffer = period2buffer * inputwheelteeth;
-
-        VSSfactor2 = period2buffer;
-
-        period2buffer = period2buffer / outputwheelteeth;
-
-        period2buffer = period2buffer * complement1;
-        period2 = period2 * complement2;
-        period2 = period2 + period2buffer;
-        period2 = period2 / 100;
-
-        //period2 = period2buffer; //removed filter
-
-        //end of signal occurs when the output stage is returned to neutral (1 output HIGH, one output LOW). The prior event it the zero crossing (outputs both LOW). The next prior event is the start of the wave (both outputs HIGH)
-
+        period2 = period2buffer; //store new value into active variable only between pulses.
         signal2start = period2 - (2 * halfwave); //backdate period to beginning of waveform
-
-        input2found = false;
-        updateVSS();
       }
     }
 
