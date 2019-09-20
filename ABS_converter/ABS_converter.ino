@@ -86,13 +86,15 @@ void setup() {
 
   pinMode(VSSPIN, OUTPUT);//VSS output
   pinMode(OE9921, OUTPUT);//Output enable to MAX9921
-  pinMode(16, OUTPUT);//Diag to MAX9921
+  pinMode(DIAG9921, OUTPUT);//Diag to MAX9921
   pinMode(17, INPUT); //ERR from MAX9921
   pinMode(OUT19921, INPUT); //Hall 1 signal from MAX9921
   pinMode(OUT29921, INPUT); //Hall 2 signal from MAX9921
 
   pinMode(ONBOARDLED, OUTPUT); //onboard LED to display power
   digitalWriteFast(ONBOARDLED, HIGH); //display power state
+  
+  digitalWriteFast(DIAG9921, LOW); //enforce DIAG port state
 
   delay(10); //give the max some time to get ready.
   digitalWriteFast(OE9921, HIGH); //enable max9921
