@@ -39,7 +39,7 @@ unsigned long VSSperiod = 10000000;
 unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightcount = 0;
-#define VSSlightoff 2000
+#define VSSlightoff 750
 
 #define WSS1PIN1  3
 #define WSS1PIN2  4
@@ -56,10 +56,10 @@ unsigned long VSSlightcount = 0;
 #define minimumspeed 1000
 
 
-int complement1 = 90; // must add to exactly 100. int to avoid float math
-int complement2 = 10;
+int complement1 = 70; // must add to exactly 100. int to avoid float math
+int complement2 = 30;
 
-const unsigned long inputwheelteeth = 48; //96 lines but it's only reading every other line or there is a divide by 2 error somewhere.
+const unsigned long inputwheelteeth = 96; //Encoder has 48 N and 48 S poles. The max9921 sees each as 1 or 0, and "no magnet" is an indeterminate state.
 const unsigned long outputwheelteeth = 44;
 const unsigned long VSSwheelteeth = 1; //this number is made up. Set to correct wheel count from transmission
 
@@ -110,8 +110,8 @@ void setup() {
   digitalWriteFast(OE9921, HIGH); //enable max9921
   delay(10);
 
-  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, CHANGE);
 
   delayflag1 = micros(); //sets up initial conditions for WSS output waveform
   periodflag1 = delayflag1; //avoid second call to micros(), trickrepeated throughout
