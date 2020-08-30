@@ -65,7 +65,7 @@ unsigned long VSSperiodtimer;
 unsigned long VSSdelayflag;
 unsigned long VSSlightcount = 0;
 
-bool signal1started = false; //these are used to find the start, middle, and end of the output waveform. 
+bool signal1started = false; //these are used to find the start, middle, and end of the output waveform.
 bool signal1sent = false;
 bool signal1ended = false;
 
@@ -79,13 +79,29 @@ bool input2found = false;
 bool VSStoggle = false; //VSS output toggles high/low every half period
 
 bool enabled = false; //output is not enabled until the first input pulse is found.
+bool error = false; //
+
+bool errreport;
+bool ERRstatus;
+bool OUT1status;
+bool OUT2status;
 
 void setup() {
   // put your setup code here, to run once:
-  if (debug1 || debug2 || debugout1 || debugout2) {
-    Serial.begin(115200);
-    Serial.println("start");
-  }
+  //  if (debug1 || debug2 || debugout1 || debugout2) {
+  Serial.begin(115200);
+  delay(500);
+  Serial.println("ABS Converter");
+  Serial.print("Input 1 debug: ");
+  Serial.println(debug1);
+  Serial.print("Input 2 debug: ");
+  Serial.println(debug2);
+  Serial.print("Output 1 debug: ");
+  Serial.println(debugout1);
+  Serial.print("Output 2 debug: ");
+  Serial.println(debugout2);
+
+  //  }
   //wheelspeed outputs use two output pins through a voltage divider for 0, 1.75, and 3v (00, 01, and 11)
   pinMode(WSS1PIN1, OUTPUT); //wheelspeed 1 output 1
   pinMode(WSS1PIN2, OUTPUT); //wheelspeed 1 output 2
@@ -108,8 +124,11 @@ void setup() {
   digitalWriteFast(OE9921, HIGH); //enable max9921
   delay(10);
 
+  Serial.println("Max9921 enabled");
+
   attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ERR9921), ERRISR, FALLING);
 
   delayflag1 = micros(); //sets up initial conditions for WSS output waveform
   periodflag1 = delayflag1; //avoid second call to micros(), trickrepeated throughout
@@ -139,7 +158,6 @@ void loop() {
   periodtimer1 = micros();
   periodtimer2 = periodtimer1;
   VSSperiodtimer = periodtimer1;
-
   if (enabled) {
     if (input1found) {
       if (debug1) {
@@ -328,6 +346,74 @@ void loop() {
       }
     }
   }
+  if (error) {
+    Serial.println("Error reported by Max9921");
+    enabled = false;
+    digitalWrite(DIAG9921, HIGH);
+    delay(5); //allow a bit of time for error output. 350ns according to Max9921 documentation.
+    ERRstatus = digitalRead(ERR9921);
+    OUT1status = digitalRead(OUT19921);
+    OUT2status = digitalRead(OUT29921);
+    Serial.print("Err pin: ");
+    Serial.println(ERRstatus);
+    Serial.print("Hall 1: ");
+    Serial.println(OUT1status);
+    Serial.print("Hall 2: ");
+    Serial.println(OUT2status); //refer to diagnostic table in Max9921 documentation.
+    error = false; //clear error but leave Max9921 disabled.
+    errreport = true;
+  }
+  if (errreport) {
+    for (int i = 0; i <= 10; i++) {
+      digitalWriteFast(VSSPIN, HIGH);
+      delay(4000);
+      if (ERRstatus) {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(100);
+        digitalWriteFast(VSSPIN, LOW);
+        delay(1000);
+        digitalWriteFast(VSSPIN, HIGH);
+      }
+      else {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
+      }
+      if (OUT1status) {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(100);
+        digitalWriteFast(VSSPIN, LOW);
+        delay(1000);
+        digitalWriteFast(VSSPIN, HIGH);
+      }
+      else {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
+      }
+      if (OUT2status) {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(100);
+        digitalWriteFast(VSSPIN, LOW);
+        delay(1000);
+        digitalWriteFast(VSSPIN, HIGH);
+      }
+      else {
+        digitalWriteFast(VSSPIN, LOW);
+        delay(100);
+        digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
+      }
+    }
+  }
 }
 
 void input1ISR() {
@@ -340,6 +426,10 @@ void input2ISR() {
   microsISRbuffer2 = micros();
   enabled = true;
   input2found = true; //set a flag to indicate that the ISR has been accessed
+}
+
+void ERRISR() {
+  error = true;
 }
 
 void updateVSS() {
