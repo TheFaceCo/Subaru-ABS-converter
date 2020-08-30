@@ -373,8 +373,9 @@ void loop() {
         digitalWriteFast(VSSPIN, HIGH);
         delay(100);
         digitalWriteFast(VSSPIN, LOW);
-        delay(1000);
+        delay(100);
         digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
       }
       else {
         digitalWriteFast(VSSPIN, LOW);
@@ -388,8 +389,9 @@ void loop() {
         digitalWriteFast(VSSPIN, HIGH);
         delay(100);
         digitalWriteFast(VSSPIN, LOW);
-        delay(1000);
+        delay(100);
         digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
       }
       else {
         digitalWriteFast(VSSPIN, LOW);
@@ -403,8 +405,9 @@ void loop() {
         digitalWriteFast(VSSPIN, HIGH);
         delay(100);
         digitalWriteFast(VSSPIN, LOW);
-        delay(1000);
+        delay(100);
         digitalWriteFast(VSSPIN, HIGH);
+        delay(1000);
       }
       else {
         digitalWriteFast(VSSPIN, LOW);
