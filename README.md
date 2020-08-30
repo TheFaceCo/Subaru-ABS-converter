@@ -1,7 +1,7 @@
 # Subaru-ABS-converter
 Read hall sensors, output variable reluctance (VR) sensors.
 
-This converts modern hall sensor inputs to older VR outputs using a Maxim 9921 IC to read 2-wire hall sensors and a Teensy 3.2 for a microcontroller. 
+This converts modern hall sensor inputs to older VR outputs using a Maxim 9921 IC to read 2-wire hall sensors with a Teensy 3.2. 
 Use this device if you are installing new hubs that use hall wheel speed sensors on old cars with variable reluctance ABS tone-rings.
 
 The output stage is a 2-bit digital output fed to an audio transformer (1:1 600ohm:600ohm). 
