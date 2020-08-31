@@ -20,6 +20,8 @@ There is an additional op-amp stage, but this has been left un-routed due to pur
 
 This setup produces and unknown amount of jitter, but it should be relatively small. 
 
-Any error reported by the Max9921 will disable the device until reboot.
+Outputs will be disabled by >1 error per 10 seconds in the default config. 
+
+Be sure to cut the USB power trace on the teensy prior to soldering to the board.
 
 Use at your own risk. 
