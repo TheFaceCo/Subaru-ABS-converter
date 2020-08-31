@@ -1,14 +1,14 @@
-#define debug1 0 //serial output of pulse count data from input 1
+#define debug1 0 //enable serial output of pulse count data from input 1
 #define debug2 0 //input 2
 #define debugout1 0 //output1
 #define debugout2 0 //output2
-int debugincount1 = 0;
-int debugoutcount1 = 0;
-int debugincount2 = 0;
-int debugoutcount2 = 0;
+unsigned int debugincount1 = 0; //used for counting input pulses (debug output shows #counts since start. Wraps to 0 at 64k
+unsigned int debugoutcount1 = 0;
+unsigned int debugincount2 = 0;
+unsigned int debugoutcount2 = 0;
 
 #define VSSoutput 0 //set to one for output to run as VSS. Set to 0 for use as GPIO. Default is temporarily showing an average of both WSS sensors with an LED.
-#define VSSlightoff 750 //how long to display VSS on output when VSS is disabled
+#define VSSlightoff 0 //how long (number of blinks) to display VSS on output when VSS is disabled
 
 //Defined as const variables to ensure type, to prevent speed problems with type conversions
 const unsigned long inputwheelteeth = 96; //Encoder has 48 N and 48 S poles. The max9921 sees each as 1 or 0, and "no magnet" is an indeterminate state.
@@ -131,7 +131,7 @@ void setup() {
 
   Serial.println("Max9921 enabled");
 
-  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(OUT19921), input1ISR, CHANGE); //count rising and falling edges of Max9921 outputs.
   attachInterrupt(digitalPinToInterrupt(OUT29921), input2ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ERR9921), ERRISR, FALLING);
 
@@ -335,7 +335,7 @@ void loop() {
       //    }
 
       //generate waveform for VSS
-      if (VSSlightcount < VSSlightoff) {
+      if (VSSlightcount < VSSlightoff) { //This line is used to disable the VSS output after a short period, because the VSS output was originally used to verify everything was working via an LED.
         if (VSSperiodtimer - VSSdelayflag >= VSSperiod) {
           if (VSStoggle) {
             digitalWriteFast(VSSPIN, HIGH);
@@ -364,68 +364,76 @@ void loop() {
     Serial.println(OUT1status);
     Serial.print("Hall 2: ");
     Serial.println(OUT2status); //refer to diagnostic table in Max9921 documentation.
+    if (!VSSoutput) {
+      digitalWriteFast(VSSPIN, LOW); //turn the LED on if VSS is used for error reporting
+    }
     error = false; //clear error flag
   }
 
   if (errortimer) {
     if (millis() - ErrorPeriodFlag >= AcceptableErrorPeriod) {
       errreport = 0; //if more than 10 seconds has elapsed between errors, reset counter to 0
+      if (!VSSoutput) {
+        digitalWriteFast(VSSPIN, HIGH); //turn the LED off if VSS is used for error reporting.
+      }
       errortimer = false;
     }
   }
   if (errreport > 1) { //if more than 1 error has been encountered in 10 seconds disable outputs and write error out to LED connected to VSS pin.
     detachInterrupt(digitalPinToInterrupt(ERR9921));
     disabled = true; //
-    for (int i = 0; i <= 5; i++) {
-      digitalWriteFast(VSSPIN, HIGH);
-      delay(4000);
-      if (ERRstatus) {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
+    if (!VSSoutput) { //if the VSS pin is used for a status LED, use it to blink the most recent error reported by Max9921. One blink = 0, two blinks = 1
+      for (int i = 0; i <= 5; i++) {
         digitalWriteFast(VSSPIN, HIGH);
-        delay(100);
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
-      }
-      else {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
-      }
-      if (OUT1status) {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(100);
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
-      }
-      else {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
-      }
-      if (OUT2status) {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(100);
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
-      }
-      else {
-        digitalWriteFast(VSSPIN, LOW);
-        delay(100);
-        digitalWriteFast(VSSPIN, HIGH);
-        delay(1000);
+        delay(4000);
+        if (ERRstatus) {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(100);
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
+        else {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
+        if (OUT1status) {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(100);
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
+        else {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
+        if (OUT2status) {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(100);
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
+        else {
+          digitalWriteFast(VSSPIN, LOW);
+          delay(100);
+          digitalWriteFast(VSSPIN, HIGH);
+          delay(1000);
+        }
       }
     }
   }
