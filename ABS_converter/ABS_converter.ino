@@ -95,7 +95,7 @@ void setup() {
   // put your setup code here, to run once:
   //  if (debug1 || debug2 || debugout1 || debugout2) {
   Serial.begin(115200);
-  delay(500);
+  delay(2000);
   Serial.println("ABS Converter");
   Serial.print("Input 1 debug: ");
   Serial.println(debug1);
